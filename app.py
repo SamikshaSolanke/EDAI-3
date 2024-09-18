@@ -40,8 +40,6 @@ def pdf_to_text(file):
         text += reader.pages[page].extract_text()
     return text
 
-# Remaining functions unchanged...
-
 # resume parsing
 import re
 
@@ -55,6 +53,7 @@ def extract_contact_number_from_resume(text):
         contact_number = match.group()
 
     return contact_number
+
 def extract_email_from_resume(text):
     email = None
 
@@ -65,6 +64,23 @@ def extract_email_from_resume(text):
         email = match.group()
 
     return email
+
+def score_resume(skills, education, experience):
+    # Define scoring criteria
+    skill_score = len(skills) * 2  # Example: 2 points per skill
+    education_score = len(education) * 3  # Example: 3 points per education qualification
+    experience_score = experience  # Assuming experience is already quantified (e.g., years)
+
+    total_score = skill_score + education_score + experience_score
+
+    # Define thresholds for scoring
+    if total_score > 50:
+        return "strong"
+    elif total_score > 20:
+        return "medium"
+    else:
+        return "weak"
+
 
 def extract_skills_from_resume(text):
     # List of predefined skills
@@ -249,10 +265,18 @@ def pred():
         extracted_education = extract_education_from_resume(text)
         name = extract_name_from_resume(text)
 
-        return render_template('resume.html', predicted_category=predicted_category,recommended_job=recommended_job,
-                               phone=phone,name=name,email=email,extracted_skills=extracted_skills,extracted_education=extracted_education)
+        # Assuming experience is derived from the text (modify as needed)
+        experience = len(extracted_education)  # Example: Count of education items as a proxy for experience
+
+        # Score the resume
+        resume_score = score_resume(extracted_skills, extracted_education, experience)
+
+        return render_template('resume.html', predicted_category=predicted_category, recommended_job=recommended_job,
+                               phone=phone, name=name, email=email, extracted_skills=extracted_skills,
+                               extracted_education=extracted_education, resume_score=resume_score)
     else:
         return render_template("resume.html", message="No resume file uploaded.")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
