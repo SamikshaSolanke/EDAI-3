@@ -31,19 +31,13 @@ def cleanresume(txt):
     return cleanText
 
 def get_strengths_and_weaknesses(text):
-    # Configure the generative AI API
     genai.configure(api_key=API_KEY)
-
-    # Define the generative model to use
     modelai = genai.GenerativeModel('gemini-pro')
 
-    # Generate the content for strengths
     strength_res = modelai.generate_content("Analyze the following text and summarize the candidate's strengths in a concise manner and give response in a paragraph:" + text)
 
-    # Generate the content for weaknesses
     weakness_res = modelai.generate_content("Analyze the following text and summarize the candidate's weaknesses in a concise manner and give response in a paragraph:" + text)
 
-    # Convert the responses to Markdown format
     strengths = textwrap.indent(strength_res.text, "• ")
     weaknesses = textwrap.indent(weakness_res.text, "• ")
 
@@ -236,26 +230,6 @@ def extract_education_from_resume(text):
 
     education = [keyword for keyword in education_keywords if re.search(r"(?i)\b{}\b".format(re.escape(keyword)), text)]
     return education
-
-
-# Extract name from resume option 1
-# def extract_name_from_resume(text):
-#     pattern = r'\b[A-Z][a-z]*\s[A-Z][a-z]+\b|\b[A-Z][a-z]+\s[A-Z][a-z]*\b'
-#     matches = re.findall(pattern, text)
-#     return matches[0] if matches else None
-
-# extraction of name based on position of title
-# def extract_name_from_resume(text):
-#     # Consider only the first few lines of the text where names are typically located
-#     lines = text.split('\n')
-#     top_lines = " ".join(lines[:10])  # Check first 10 lines
-#
-#     # Apply regex to extract name
-#     pattern = r'\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)+\b'
-#     matches = re.findall(pattern, top_lines)
-#
-#     return matches[0] if matches else None
-
 
 # Score the resume based on skills, education, and experience
 def score_resume(skills, education, experience):
