@@ -6,6 +6,8 @@ import spacy
 import google.generativeai as genai
 import textwrap
 
+from sympy.physics.units import percent
+
 nlp = spacy.load('en_core_web_sm')
 
 API_KEY = "AIzaSyDjHvCOZg3RaZt8cJoo4D0KRARceRvp_kU"
@@ -30,26 +32,11 @@ def cleanresume(txt):
     cleanText = re.sub(r'\s+', ' ', cleanText)
     return cleanText
 
-def get_strengths_and_weaknesses(text):
-    genai.configure(api_key=API_KEY)
-    modelai = genai.GenerativeModel('gemini-pro')
-
-    strength_res = modelai.generate_content("Analyze the following text and summarize the candidate's strengths in a concise manner and give response in a paragraph:" + text)
-
-    weakness_res = modelai.generate_content("Analyze the following text and summarize the candidate's weaknesses in a concise manner and give response in a paragraph:" + text)
-
-    strengths = textwrap.indent(strength_res.text, "• ")
-    weaknesses = textwrap.indent(weakness_res.text, "• ")
-
-    return strengths, weaknesses
-
-# Predict resume category
 def predict_category(resume_text):
     resume_text = cleanresume(resume_text)
     resume_tfidf = tfidf_vectorizer_categorization.transform([resume_text])
     predicted_category = rf_classifier_categorization.predict(resume_tfidf)[0]
     return predicted_category
-
 
 # Recommend job based on resume
 def job_recommendation(resume_text):
@@ -58,8 +45,6 @@ def job_recommendation(resume_text):
     recommended_job = rf_classifier_job_recommendation.predict(resume_tfidf)[0]
     return recommended_job
 
-
-# Convert PDF to text
 def pdf_to_text(file):
     reader = PdfReader(file)
     text = ''
@@ -67,6 +52,21 @@ def pdf_to_text(file):
         text += reader.pages[page].extract_text()
     return text
 
+def get_strengths_and_weaknesses(text):
+    genai.configure(api_key=API_KEY)
+    modelai = genai.GenerativeModel('gemini-pro')
+    strength_res = modelai.generate_content("You are a skilled HR analyst with extensive experience in evaluating candidate profiles and identifying key strengths. Your task is to analyze the following text and summarize the candidate's strengths in a concise manner. Please ensure that your response is structured as a single paragraph that captures the essence of the candidate's strengths while remaining clear and focused. Here is the text for analysis:" + text)
+    weakness_res = modelai.generate_content("You’re an experienced career coach with a deep understanding of candidate evaluations and a keen eye for identifying areas of improvement. Your task is to analyze the following text and summarize the candidate's weaknesses in a concise manner, providing your response in a single paragraph. Here is the text to analyze:" + text)
+    strengths = textwrap.indent(strength_res.text, "• ")
+    weaknesses = textwrap.indent(weakness_res.text, "• ")
+    return strengths, weaknesses
+
+def role_match_percent():
+    genai.configure(api_key=API_KEY)
+    modelai = genai.GenerativeModel('gemini-pro')
+    percent_res = modelai.generate_content("Provide a review on match for job recommended and candidate's resume category based on required qualifications and the candidate's resume in a short paragraph. The job recommended is {recommended_job} and the resume falls under {predicted_category} category")
+    role_percent = textwrap.indent(percent_res.text, "• ")
+    return role_percent
 
 # Extract contact number from resume
 def extract_contact_number_from_resume(text):
@@ -74,13 +74,11 @@ def extract_contact_number_from_resume(text):
     match = re.search(pattern, text)
     return match.group() if match else None
 
-
 # Extract email from resume
 def extract_email_from_resume(text):
     pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
     match = re.search(pattern, text)
     return match.group() if match else None
-
 
 # Extract skills from resume
 def extract_skills_from_resume(text):
@@ -284,13 +282,14 @@ def pred():
         extracted_education = extract_education_from_resume(text)
         candidate_name = get_candidate_name(text)
         strengths, weaknesses = get_strengths_and_weaknesses(text)
+        role_percent = role_match_percent()
         # Assuming experience is based on the length of education entries as a placeholder
         experience = len(extracted_education)
         resume_score = score_resume(extracted_skills, extracted_education, experience)
 
         return render_template('resume.html', predicted_category=predicted_category, recommended_job=recommended_job,
                                phone=phone, candidate_name=candidate_name, email=email, extracted_skills=extracted_skills,
-                               extracted_education=extracted_education, resume_score=resume_score, strengths=strengths, weaknesses=weaknesses)
+                               extracted_education=extracted_education, resume_score=resume_score, strengths=strengths, weaknesses=weaknesses, role_percent=role_percent)
     else:
         return render_template("resume.html", message="No resume file uploaded.")
 
