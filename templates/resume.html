@@ -83,6 +83,7 @@
             <p class="text-center"><b><strong>Recommended Job:</strong></b> {{ recommended_job }}</p>
             <br>
             <hr>
+            <br>
             <h2 class="text-center">Extracted Information</h2>
             <p class="text-right"><b><strong>Name:</strong></b> {{ candidate_name }}</p>
 
@@ -124,6 +125,12 @@
             {% else %}
             <p class="text-center"><strong>The resume is weak.</strong></p>
             {% endif %}
+
+            <br>
+            <hr>
+            <br>
+            <h2 class="text-center">Role matching</h2>
+            <p class="text-center">{{role_percent}}</p>
 
             <br>
             <hr>
