@@ -4,8 +4,14 @@ import pickle
 import os
 import re
 import spacy
+import google.generativeai as genai
+import textwrap
+from IPython.display import Markdown
+from kiwisolver import strength
 
 nlp = spacy.load('en_core_web_sm')
+
+API_KEY = "AIzaSyDjHvCOZg3RaZt8cJoo4D0KRARceRvp_kU"
 
 app = Flask(__name__)
 
@@ -27,6 +33,61 @@ def cleanresume(txt):
     cleanText = re.sub(r'\s+', ' ', cleanText)
     return cleanText
 
+
+# def get_strengths_and_weaknesses(text):
+#     # Configure the generative AI API
+#     genai.configure(api_key=API_KEY)
+#
+#     # Define the generative model to use
+#     modelai = genai.GenerativeModel('gemini-pro')
+#
+#     # Generate the content for strengths
+#     strength_res = modelai.generate_content(
+#         prompt="Analyze the following text and summarize the candidate's strengths in a concise manner:",
+#         input_text=text
+#     )
+#
+#     # Generate the content for weaknesses
+#     weakness_res = modelai.generate_content(
+#         prompt="Analyze the following text and summarize the candidate's weaknesses in a concise manner:",
+#         input_text=text
+#     )
+#
+#     # Function to convert response to Markdown
+#     def to_markdown(text):
+#         lines = text.split('. ')
+#         formatted_text = "\n\n".join([f"* {line.strip()}" for line in lines if line.strip()])
+#         return Markdown(formatted_text)
+#
+#     # Convert the responses to Markdown format
+#     strengths = to_markdown(strength_res)
+#     weaknesses = to_markdown(weakness_res)
+#
+#     return strengths, weaknesses
+
+def get_strengths_and_weaknesses(text):
+    # Configure the generative AI API
+    genai.configure(api_key=API_KEY)
+
+    # Define the generative model to use
+    modelai = genai.GenerativeModel('gemini-pro')
+
+    # Generate the content for strengths
+    strength_res = modelai.generate_content("Analyze the following text and summarize the candidate's strengths in a concise manner:",)
+
+    # Generate the content for weaknesses
+    weakness_res = modelai.generate_content("Analyze the following text and summarize the candidate's weaknesses in a concise manner:",)
+
+    # Function to convert response to Markdown
+    def to_markdown(text):
+        text = text.replace('.', ' *')
+        return Markdown(textwrap.indent(text, '>', predicate=lambda _: True))
+
+    # Convert the responses to Markdown format
+    strengths = to_markdown(strength_res.text)
+    weaknesses = to_markdown(weakness_res.text)
+
+    return strengths, weaknesses
 
 # Predict resume category
 def predict_category(resume_text):
@@ -276,15 +337,14 @@ def pred():
         extracted_skills = extract_skills_from_resume(text)
         extracted_education = extract_education_from_resume(text)
         name = extract_name_from_resume(text)
-
+        strengths, weaknesses = get_strengths_and_weaknesses(text)
         # Assuming experience is based on the length of education entries as a placeholder
         experience = len(extracted_education)
-
         resume_score = score_resume(extracted_skills, extracted_education, experience)
 
         return render_template('resume.html', predicted_category=predicted_category, recommended_job=recommended_job,
                                phone=phone, name=name, email=email, extracted_skills=extracted_skills,
-                               extracted_education=extracted_education, resume_score=resume_score)
+                               extracted_education=extracted_education, resume_score=resume_score, strengths=strengths, weaknesses=weaknesses)
     else:
         return render_template("resume.html", message="No resume file uploaded.")
 

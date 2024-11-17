@@ -91,8 +91,15 @@
 
             <p class="text-right"><b><strong>Email:</strong></b> {{ email }}</p>
 
+            <h2>Portfolio Links</h2>
+            <ul>
+                {% for link in portfolio_links %}
+                <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
+                {% endfor %}
+            </ul>
+
             {% if extracted_education %}
-            <p class="text-left">Education:</p>
+            <p class="text-left"><strong>Education:</strong></p>
             <ul class="list-unstyled text-left">
                 {% for edu in extracted_education %}
                 <li>{{ edu }}</li>
